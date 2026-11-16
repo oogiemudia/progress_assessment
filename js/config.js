@@ -3,3 +3,6 @@ window.RESULTS_URL = "https://script.google.com/macros/s/AKfycbyKEUif-XS3MwRoRoE
 
 // Learners cannot submit until this many minutes after they start (0 = no minimum).
 window.MIN_MINUTES = 45;
+
+// Link to the Game Hub shown on the next steps card (leave empty for no link).
+window.GAMEHUB_URL = "";

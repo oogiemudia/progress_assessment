@@ -301,8 +301,10 @@
 
     var st = S.steps || ["", "", ""];
     html += '<section class="card pledge" id="stepsCard"><h2>My 3 next steps</h2><p>Using your feedback and plan above, write <b>three specific things</b> you will do to prepare for your core exam. You must complete all three to unlock your question-by-question feedback. Your teacher will see them.</p>' +
+      '<div class="info"><b>🎮 Use the Game Hub to revise.</b> Start with your weakest unit from the meters above. Play little and often (15 minutes, 3 times a week), replay every question you get wrong until you get it right, and try to beat your own score each time.' +
+      (window.GAMEHUB_URL ? ' <a href="' + window.GAMEHUB_URL + '" target="_blank" rel="noopener">Open the Game Hub ►</a>' : '') + '</div>' +
       [0, 1, 2].map(function (i) {
-        return '<label class="field" style="margin:12px 0">Next step ' + (i + 1) + '<input class="answer-input step" data-i="' + i + '" value="' + esc(st[i]) + '" placeholder="' + ["For example: I will redo questions 13 to 16 until I get them all right.", "For example: I will make flash cards for every unit and symbol in Unit 8.1.", "For example: I will do one timed core exam question every Friday."][i] + '"></label>';
+        return '<label class="field" style="margin:12px 0">Next step ' + (i + 1) + '<input class="answer-input step" data-i="' + i + '" value="' + esc(st[i]) + '" placeholder="' + ["For example: I will play the Game Hub games for my weakest unit 3 times a week until I score 80 %.", "For example: I will replay every Game Hub question I get wrong and write the correct method in my notes.", "For example: I will beat my Game Hub high score on sectors and design before the mock exam."][i] + '"></label>';
       }).join("") + '<div class="counter" id="stepsMsg"></div><div class="btn-row"><button class="btn green" id="btnSteps">' + (S.stepsDone ? "✓ Update my next steps" : "Save my next steps and unlock my feedback") + '</button></div></section>';
 
     html += '<section class="card" id="qbq"' + (S.stepsDone ? '' : ' hidden') + '><h2>Question by question</h2><p class="no-print" style="font-size:.8rem;color:var(--muted)">Open each question to see your answer, the correct answer and what to do next.</p>' +
