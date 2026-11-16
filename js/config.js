@@ -1,2 +1,2 @@
-/* Paste the Google Apps Script web app URL here (ends in /exec). Leave empty to switch automatic sending off. */
-window.RESULTS_URL = "";
+/* Google Apps Script web app that receives results (ends in /exec). Leave empty to switch automatic sending off. */
+window.RESULTS_URL = "https://script.google.com/macros/s/AKfycbyKEUif-XS3MwRoRoE4-yc4mZfsvvnq31khXsIRfeePrtXvd02LMK3vbH2F7ppW_aY1/exec";
