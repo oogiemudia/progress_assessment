@@ -76,6 +76,7 @@
       '<h2>Before you start</h2><ul class="rules">' +
       '<li><b>Every question is compulsory.</b> You cannot submit until all ' + Qs.length + ' are answered.</li>' +
       '<li>Written answers need a minimum number of words. Write in full sentences.</li>' +
+      (window.MIN_MINUTES ? '<li><b>Take your time.</b> You cannot submit until at least ' + window.MIN_MINUTES + ' minutes after you start. Rushing costs marks.</li>' : '') +
       '<li>Your answers save on this device as you go, so a refresh will not lose them.</li>' +
       '<li>Work on your own. Leaving this page during the quiz is recorded on your results.</li>' +
       '<li>When you submit, you get your marks, feedback on every question and a personal plan for the core exam.</li></ul>' +
@@ -167,12 +168,23 @@
   }
 
   /* ---------- review ---------- */
+  var reviewTimer = null;
+  function minLeft() {
+    var need = Number(window.MIN_MINUTES || 0) * 60000, t0 = new Date(S.started).getTime();
+    if (!need || !isFinite(t0)) return 0;
+    return Math.max(0, t0 + need - Date.now());
+  }
+  function hhmm(ms) { var d = new Date(ms); return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
   function renderReview() {
     topProgress();
-    var miss = missing();
+    var miss = missing(), left = minLeft();
+    if (reviewTimer) { clearTimeout(reviewTimer); reviewTimer = null; }
+    if (left > 0) reviewTimer = setTimeout(function () { if (S.stage === "review") renderReview(); }, Math.min(left + 500, 20000));
+    var waitBox = left > 0 && !miss.length ? '<div class="warn"><b>⏳ You can submit from ' + hhmm(Date.now() + left) + ' (' + Math.ceil(left / 60000) + ' min to go).</b> The assessment needs at least ' + window.MIN_MINUTES +
+      ' minutes. Use the time to check your work: redo each calculation, check the units, and add detail to your written answers.</div>' : '';
     app.innerHTML = '<section class="card"><h2>Review your answers</h2>' +
       (miss.length ? '<div class="warn"><b>' + miss.length + ' question' + (miss.length > 1 ? "s are" : " is") + ' not finished.</b> Every question is compulsory. Click a question below to complete it.</div>'
-        : '<div class="info"><b>All ' + Qs.length + ' questions are answered.</b> Check any flagged questions, then submit. You cannot change your answers after submitting.</div>') +
+        : '<div class="info"><b>All ' + Qs.length + ' questions are answered.</b> Check any flagged questions, then submit. You cannot change your answers after submitting.</div>') + waitBox +
       '<ul class="review-list">' + Qs.map(function (q, i) {
         var a = S.answers[q.n], done = answered(q), shown;
         if (q.t === "mcq") shown = a !== undefined && a !== null && a !== "" ? "ABCDEF"[a] + ". " + q.opts[a] : "";
@@ -182,11 +194,11 @@
         return '<li class="' + (done ? "" : "missing") + '"><span><b>Q' + q.n + '.</b> ' + esc(shown || "No answer yet") + (S.flags[q.n] ? " ⚑" : "") + '</span>' +
           '<span class="st">' + (done ? "✓" : "✗ to do") + ' <button class="btn ghost" style="padding:4px 12px" data-i="' + i + '">Edit</button></span></li>';
       }).join("") + '</ul><div class="btn-row"><button class="btn ghost" id="btnBack">◄ Back to questions</button><span class="spacer"></span>' +
-      '<button class="btn green" id="btnSubmit"' + (miss.length ? " disabled" : "") + '>Submit for marking ✓</button></div></section>';
+      '<button class="btn green" id="btnSubmit"' + (miss.length || left > 0 ? " disabled" : "") + '>' + (left > 0 ? "Submit unlocks at " + hhmm(Date.now() + left) : "Submit for marking ✓") + '</button></div></section>';
     Array.prototype.forEach.call(app.querySelectorAll("[data-i]"), function (b) { b.onclick = function () { S.stage = "quiz"; go(Number(b.dataset.i)); }; });
     $("#btnBack").onclick = function () { S.stage = "quiz"; var m = missing(); go(m.length ? Qs.indexOf(m[0]) : S.cur); };
     $("#btnSubmit").onclick = function () {
-      if (missing().length) return;
+      if (missing().length || minLeft() > 0) return;
       modal("Submit your assessment?", "<p>You have answered all " + Qs.length + " questions. Once you submit, your answers are locked and marked straight away.</p>", [
         { label: "Not yet", cls: "ghost" }, { label: "Submit now", cls: "green", fn: submit }]);
     };

@@ -94,8 +94,7 @@ window.QUIZ = {
    "t": "sentence",
    "u": "C",
    "pts": 1,
-   "q": "Complete the sentence. Signalling, track, overhead lines and rolling stock are the work of the __________ engineering sector.",
-   "img": "img/q/q6.svg"
+   "q": "Complete the sentence. Signalling, track, overhead lines and rolling stock are the work of the __________ engineering sector."
   },
   {
    "n": 7,
@@ -288,8 +287,7 @@ window.QUIZ = {
     "50th percentile arm reach",
     "5th percentile female arm reach",
     "The average of male and female arm reach"
-   ],
-   "img": "img/q/q26.svg"
+   ]
   },
   {
    "n": 27,
@@ -380,7 +378,6 @@ window.QUIZ = {
    "u": "D",
    "pts": 6,
    "q": "A factory employs a diverse workforce, including wheelchair users and people of very different heights. Explain how inclusive design, ergonomic design and anthropometric data should be used to design a new assembly workstation. (6 marks)",
-   "img": "img/q/q35.svg",
    "minWords": 60
   }
  ]
