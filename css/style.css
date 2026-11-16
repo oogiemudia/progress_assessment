@@ -70,6 +70,9 @@ label.check input { width: 22px; height: 22px; margin-top: 3px; flex: none; }
 .qtype.adv { background: #fff1db; color: #8a5a10; }
 .pts { font-size: .75rem; color: var(--muted); font-weight: bold; }
 .qtext { font-size: 1.05rem; margin: 16px 0; }
+.qfig { margin: 6px 0 16px; text-align: center; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+.qfig img { max-width: 100%; max-height: 300px; }
+.qfig.small img { max-height: 200px; }
 .how { font-size: .78rem; color: var(--muted); margin-top: -6px; }
 .answer-input { width: 100%; padding: 14px; border: 2px solid var(--line); border-radius: 10px; background: #fff; font-size: 1rem; }
 .answer-input:focus, label.field input:focus { border-color: var(--teal); outline: 3px solid rgba(47, 154, 166, .25); }

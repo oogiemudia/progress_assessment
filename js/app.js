@@ -103,7 +103,7 @@
     if (first) html += '<section class="card section-intro"><h2>' + esc(sec.title) + '</h2><p style="margin:0">' + esc(sec.intro) + '</p></section>';
     html += '<section class="card"><div class="qhead"><span class="qtype' + (adv ? " adv" : "") + '">' + info.icon + " " + esc(info.label) + '</span>' +
       '<span class="pts">Question ' + q.n + ' of ' + Qs.length + ' · ' + q.pts + ' mark' + (q.pts > 1 ? "s" : "") + '</span></div>' +
-      '<div class="qtext" id="qtext">' + esc(q.q) + '</div><div class="how">' + esc(info.how) + '</div><div style="margin-top:14px" id="ansBox"></div>' +
+      '<div class="qtext" id="qtext">' + esc(q.q) + '</div>' + (q.img ? '<figure class="qfig"><img src="' + q.img + '" alt="Diagram for question ' + q.n + '"></figure>' : '') + '<div class="how">' + esc(info.how) + '</div><div style="margin-top:14px" id="ansBox"></div>' +
       '<div class="btn-row"><button class="btn ghost" id="btnPrev"' + (S.cur === 0 ? " disabled" : "") + '>◄ Back</button>' +
       '<button class="flagbtn" id="btnFlag" aria-pressed="' + !!S.flags[q.n] + '">⚑ Flag to check later</button><span class="spacer"></span>' +
       (S.cur < Qs.length - 1 ? '<button class="btn" id="btnNext">Next ►</button>' : '<button class="btn amber" id="btnNext">Review and submit ►</button>') + '</div></section>' +
@@ -287,10 +287,16 @@
       '<tr><td>2</td><td>' + esc(QZ.units[pr[1]].short) + '</td><td>Actions 1 and 2 above, plus one timed core exam question (about 1 minute per mark).</td></tr>' +
       '<tr><td>3</td><td>' + esc(QZ.units[pr[2]].short) + ' and a mixed review</td><td>Final actions for all three topics, then a timed past-paper section. Compare it with the mark scheme.</td></tr></table></section>';
 
-    html += '<section class="card"><h2>Question by question</h2><p class="no-print" style="font-size:.8rem;color:var(--muted)">Open each question to see your answer, the correct answer and what to do next.</p>' +
+    var st = S.steps || ["", "", ""];
+    html += '<section class="card pledge" id="stepsCard"><h2>My 3 next steps</h2><p>Using your feedback and plan above, write <b>three specific things</b> you will do to prepare for your core exam. You must complete all three to unlock your question-by-question feedback. Your teacher will see them.</p>' +
+      [0, 1, 2].map(function (i) {
+        return '<label class="field" style="margin:12px 0">Next step ' + (i + 1) + '<input class="answer-input step" data-i="' + i + '" value="' + esc(st[i]) + '" placeholder="' + ["For example: I will redo questions 13 to 16 until I get them all right.", "For example: I will make flash cards for every unit and symbol in Unit 8.1.", "For example: I will do one timed core exam question every Friday."][i] + '"></label>';
+      }).join("") + '<div class="counter" id="stepsMsg"></div><div class="btn-row"><button class="btn green" id="btnSteps">' + (S.stepsDone ? "✓ Update my next steps" : "Save my next steps and unlock my feedback") + '</button></div></section>';
+
+    html += '<section class="card" id="qbq"' + (S.stepsDone ? '' : ' hidden') + '><h2>Question by question</h2><p class="no-print" style="font-size:.8rem;color:var(--muted)">Open each question to see your answer, the correct answer and what to do next.</p>' +
       Qs.map(function (q) {
         var r = R.per[q.n], k = E.KEY[q.n], ca = E.correctAnswerText(q), body = "";
-        body += '<p><b>Question:</b> ' + esc(q.q) + '</p><p><b>Your answer:</b></p><div class="yours">' + esc(answerShown(q, S.answers[q.n])) + '</div>';
+        body += '<p><b>Question:</b> ' + esc(q.q) + '</p>' + (q.img ? '<figure class="qfig small"><img src="' + q.img + '" alt=""></figure>' : '') + '<p><b>Your answer:</b></p><div class="yours">' + esc(answerShown(q, S.answers[q.n])) + '</div>';
         if (ca) body += '<p><b>Correct answer:</b> ' + esc(ca) + '</p>';
         if (r.msg) body += '<p><b>Note:</b> ' + esc(r.msg) + '</p>';
         if (r.hit) {
@@ -302,15 +308,28 @@
         return '<details class="qr"><summary><span class="mk ' + r.status + '">' + fmt(r.score) + ' / ' + q.pts + '</span><span><b>Q' + q.n + '.</b> ' + esc(q.q.length > 90 ? q.q.slice(0, 90) + "…" : q.q) + '</span></summary><div class="body">' + body + '</div></details>';
       }).join("") + '</section>';
 
-    html += '<section class="card pledge"><h2>My next step</h2><p>Write one specific thing you will do this week to improve. Your teacher will see it.</p>' +
-      '<textarea class="answer-input" id="pledge" placeholder="For example: I will redo questions 13 to 16 and learn the capacitor rules by Friday.">' + esc(S.pledge) + '</textarea>' +
-      '<div class="btn-row"><button class="btn ' + (window.RESULTS_URL ? "ghost" : "amber") + '" id="btnDl">⬇ ' + (window.RESULTS_URL ? "Download a backup copy" : "Download results file for your teacher") + '</button><button class="btn ghost" id="btnPrint">🖨 Print or save as PDF</button></div>' +
+    html += '<section class="card"><h2>Keep your report</h2><p>Save this report as a PDF for your revision folder. It includes your plan and feedback on every question.</p>' +
+      '<div class="btn-row"><button class="btn ghost" id="btnPrint">🖨 Save my report as PDF</button><button class="btn amber" id="btnDl"' + (window.RESULTS_URL && S.sent === "yes" ? ' hidden' : '') + '>⬇ Download results file for your teacher</button></div>' +
       (window.RESULTS_URL ? '' : '<div class="info no-print"><b>Hand in:</b> download your results file and upload it to the Teams assignment. Keep the PDF for your revision.</div>') +
       '<p class="no-print" style="font-size:.68rem;color:var(--muted);margin-top:18px">Teacher: to reset this device for another learner, <a href="#" id="lnkReset">reset the quiz</a>.</p></section>';
     app.innerHTML = html;
     setTimeout(function () { var arc = document.getElementById("arc"); if (arc) arc.style.strokeDashoffset = C * (1 - R.pct / 100); }, 80);
-    $("#pledge").oninput = function (e) { S.pledge = e.target.value; save(); sendPledge(); };
+    var stepInputs = app.querySelectorAll("input.step");
+    function stepsOk() { return Array.prototype.every.call(stepInputs, function (x) { return E.words(x.value) >= 5; }); }
+    function stepsMsg() { var n = Array.prototype.filter.call(stepInputs, function (x) { return E.words(x.value) >= 5; }).length;
+      $("#stepsMsg").textContent = n + " of 3 next steps written (at least 5 words each)"; $("#stepsMsg").className = "counter" + (n === 3 ? " ok" : ""); }
+    Array.prototype.forEach.call(stepInputs, function (x) { x.oninput = function () { S.steps = Array.prototype.map.call(stepInputs, function (y) { return y.value; }); save(); stepsMsg(); }; });
+    stepsMsg();
+    $("#btnSteps").onclick = function () {
+      if (!stepsOk()) { modal("Write all three next steps", "<p>Each next step needs at least 5 words. Make each one specific: what you will do, and when.</p>", [{ label: "OK" }]); return; }
+      S.steps = Array.prototype.map.call(stepInputs, function (y) { return y.value.trim(); });
+      S.pledge = S.steps.map(function (x, i) { return (i + 1) + ") " + x; }).join("  ");
+      S.stepsDone = true; save(); sendPledge(true);
+      $("#qbq").hidden = false; $("#btnSteps").textContent = "✓ Update my next steps";
+      $("#qbq").scrollIntoView({ behavior: "smooth" });
+    };
     sentBadge(); if (S.sent !== "yes") sendResults(R);
+    window.__showDl = function () { var b = document.getElementById("btnDl"); if (b) b.hidden = S.sent === "yes" && !!window.RESULTS_URL; };
     $("#btnPrint").onclick = function () { Array.prototype.forEach.call(app.querySelectorAll("details"), function (d) { d.open = true; }); window.print(); };
     $("#btnDl").onclick = function () { download(R); };
     $("#lnkReset").onclick = function (e) {
@@ -335,21 +354,21 @@
   function sendResults(R, tries) {
     if (!window.RESULTS_URL) { S.sent = "off"; save(); return; }
     tries = tries || 0;
-    post(record(R)).then(function () { S.sent = "yes"; save(); sentBadge(); })
-      .catch(function () { S.sent = "retry"; save(); sentBadge(); if (tries < 20) setTimeout(function () { sendResults(R, tries + 1); }, Math.min(60000, 3000 * (tries + 1))); });
+    post(record(R)).then(function () { S.sent = "yes"; save(); sentBadge(); if (window.__showDl) window.__showDl(); })
+      .catch(function () { S.sent = "retry"; save(); sentBadge(); if (window.__showDl) window.__showDl(); if (tries < 20) setTimeout(function () { sendResults(R, tries + 1); }, Math.min(60000, 3000 * (tries + 1))); });
   }
   function sentBadge() {
     var el = document.getElementById("sent"); if (!el) return;
-    if (S.sent === "yes") { el.className = "info"; el.innerHTML = "<b>✓ Your results have been sent to your teacher.</b> You do not need to do anything else."; }
-    else if (S.sent === "retry") { el.className = "warn"; el.innerHTML = "<b>Sending your results…</b> Keep this page open until this says sent. It retries automatically."; }
+    if (S.sent === "yes") { el.className = "info"; el.innerHTML = "<b>✓ Your results have been sent to your teacher.</b> Now read your feedback and write your 3 next steps below."; }
+    else if (S.sent === "retry") { el.className = "warn"; el.innerHTML = "<b>Sending your results…</b> Keep this page open until this says sent. It retries automatically. If it never sends, use the Download button at the bottom and give the file to your teacher."; }
     else if (S.sent === "off") { el.className = "info"; el.innerHTML = "Download your results file below and hand it in to your teacher."; }
     else { el.className = "info"; el.innerHTML = "Sending your results to your teacher…"; }
   }
   var pledgeTimer = null;
-  function sendPledge() {
+  function sendPledge(now) {
     if (!window.RESULTS_URL || !S.id) return;
     clearTimeout(pledgeTimer);
-    pledgeTimer = setTimeout(function () { post({ kind: "pledge", id: S.id, pledge: S.pledge }).catch(function () { }); }, 1500);
+    pledgeTimer = setTimeout(function () { post({ kind: "pledge", id: S.id, pledge: S.pledge }).catch(function () { setTimeout(function () { sendPledge(true); }, 5000); }); }, now ? 0 : 1500);
   }
 
   function download(R) {

@@ -88,21 +88,24 @@
 
   function markTheory(q, k, ans) {
     var text = String(ans || ""), w = words(text), hit = [], miss = [], raw = 0;
+    var gots = [];
     k.crit.forEach(function (c) {
       var n = 0;
       c.re.forEach(function (r) { if (new RegExp(r, "i").test(text)) n++; });
       var got = Math.min(c.max, n);
+      if (c.pairWith !== undefined) got = Math.min(got, gots[c.pairWith]);
+      gots.push(got);
       raw += got;
       (got > 0 ? hit : miss).push(c.label);
     });
     var score = Math.min(q.pts, raw);
     if (k.band) {
-      if (w < 80) score = Math.min(score, 3);
-      else if (w < 130) score = Math.min(score, 5);
+      if (w < 45) score = Math.min(score, 3);
+      else if (w < 80) score = Math.min(score, 5);
       var hasAnalysis = hit.some(function (l) { return /^Analysis/.test(l); });
       if (!hasAnalysis) score = Math.min(score, 4);
     } else {
-      score = Math.min(score, Math.max(0, Math.floor(w / 7)));
+      score = Math.min(score, Math.max(0, Math.floor(w / 5)));
     }
     return { score: score, notes: ["provisional"], hit: hit, miss: miss, words: w };
   }
