@@ -19,12 +19,12 @@
   var PASS = "b7d81ba5e5a6a4191d031a69b507ce6622b5924bc32dfea294088d028f58a4ef"; // SHA-256 of the teacher code
 
   function gate() {
-    if (sessionStorage.getItem("tmc-teacher-ok") === "1") return main();
+    if (sessionStorage.getItem("tmc-teacher-ok") === "1") { main(); if (window.RESULTS_URL) pull(); return; }
     root.innerHTML = '<section class="card" style="max-width:520px;margin:40px auto"><h2>Teacher access</h2><p>Enter the teacher code to open the results dashboard.</p>' +
       '<label class="field">Teacher code<input id="code" type="password" autocomplete="off"></label><div class="btn-row"><button class="btn" id="go">Open dashboard</button></div><p id="err" class="warn" hidden>That code is not right.</p></section>';
     var go = async function () {
       var h = await sha(document.getElementById("code").value.trim());
-      if (h === PASS) { sessionStorage.setItem("tmc-teacher-ok", "1"); main(); } else document.getElementById("err").hidden = false;
+      if (h === PASS) { sessionStorage.setItem("tmc-teacher-ok", "1"); sessionStorage.setItem("tmc-teacher-code", document.getElementById("code").value.trim()); main(); if (window.RESULTS_URL) pull(); } else document.getElementById("err").hidden = false;
     };
     document.getElementById("go").onclick = go;
     document.getElementById("code").onkeydown = function (e) { if (e.key === "Enter") go(); };
@@ -48,6 +48,7 @@
     var ids = Object.keys(store.learners);
     var html = '<section class="card"><h1 style="margin-top:0">Class results</h1>' +
       '<div class="drop" id="drop"><b>Drop learners\' results files here</b><br><span style="font-size:.8rem;color:var(--muted)">or click to choose them (the .json files learners download at the end). You can add more at any time.</span><input type="file" id="file" accept=".json,application/json" multiple hidden></div>' +
+      (window.RESULTS_URL ? '<div class="btn-row"><button class="btn green" id="pull">⟳ Get latest results from the results sheet</button><span id="pullMsg" style="font-size:.8rem"></span></div>' : '') +
       '<div class="tabs" style="margin-top:16px"><button class="btn ' + (view.tab === "class" ? "" : "ghost") + '" data-tab="class">Class table (' + ids.length + ')</button>' +
       '<button class="btn ' + (view.tab === "qa" ? "" : "ghost") + '" data-tab="qa">Question analysis</button>' +
       '<button class="btn ' + (view.tab === "key" ? "" : "ghost") + '" data-tab="key">Answer key</button><span class="spacer"></span>' +
@@ -131,6 +132,17 @@
     var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + txt], { type: "text/csv" })); a.download = "core progress results.csv"; document.body.appendChild(a); a.click(); a.remove();
   }
 
+  function pull() {
+    var msg = document.getElementById("pullMsg"); msg.textContent = " Loading…";
+    fetch(window.RESULTS_URL + "?code=" + encodeURIComponent(sessionStorage.getItem("tmc-teacher-code") || ""))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) { msg.textContent = " The results sheet refused the teacher code."; return; }
+        d.records.forEach(function (r) { store.learners[idOf(r)] = r; }); save(); main();
+        var m = document.getElementById("pullMsg"); if (m) m.textContent = " ✓ " + d.records.length + " results loaded.";
+      }).catch(function () { msg.textContent = " Could not reach the results sheet. Check the web app URL in js/config.js."; });
+  }
+
   function wire() {
     var drop = document.getElementById("drop"), file = document.getElementById("file");
     drop.onclick = function () { file.click(); };
@@ -146,6 +158,7 @@
       inp.onchange = function () { var o = store.overrides[view.sel] = store.overrides[view.sel] || {}; o[inp.dataset.q] = inp.value; save(); var y = window.scrollY; main(); window.scrollTo(0, y); };
     });
     var c = document.getElementById("csv"); if (c) c.onclick = csv;
+    var pl = document.getElementById("pull"); if (pl) pl.onclick = pull;
     var cl = document.getElementById("clear"); if (cl) cl.onclick = function () { if (confirm("Remove all loaded results and overrides from this browser?")) { store = { learners: {}, overrides: {} }; save(); view.sel = null; main(); } };
   }
 

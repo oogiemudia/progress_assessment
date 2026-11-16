@@ -263,7 +263,7 @@
       '<div><div class="kicker" style="color:#9c6a12;letter-spacing:.15em;font-weight:bold;font-size:.7rem">YOUR RESULTS</div><h1 style="margin:.2em 0">' + esc(S.name) + '</h1>' +
       '<p style="margin:.2em 0">Group ' + esc(S.group) + ' · ' + new Date(S.finished).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) + (m ? ' · ' + m + ' min' : '') + '</p>' +
       '<p><span class="bandpill" style="background:' + R.band.color + '">' + R.band.name + '</span></p>' +
-      '<p style="font-size:.75rem;color:var(--muted)">Written answers are marked automatically against the mark scheme. Your teacher checks and confirms these marks.</p></div></div></section>';
+      '<p style="font-size:.75rem;color:var(--muted)">Written answers are marked automatically against the mark scheme. Your teacher checks and confirms these marks.</p></div></div><div id="sent" class="info"></div></section>';
 
     html += '<section class="card"><h2>Your personal feedback</h2>' + personalMessage(R).map(function (t) { return "<p>" + t + "</p>"; }).join("") + '</section>';
 
@@ -304,12 +304,13 @@
 
     html += '<section class="card pledge"><h2>My next step</h2><p>Write one specific thing you will do this week to improve. Your teacher will see it.</p>' +
       '<textarea class="answer-input" id="pledge" placeholder="For example: I will redo questions 13 to 16 and learn the capacitor rules by Friday.">' + esc(S.pledge) + '</textarea>' +
-      '<div class="btn-row"><button class="btn amber" id="btnDl">⬇ Download results file for your teacher</button><button class="btn ghost" id="btnPrint">🖨 Print or save as PDF</button></div>' +
-      '<div class="info no-print"><b>Hand in:</b> download your results file and upload it to the Teams assignment. Keep the PDF for your revision.</div>' +
+      '<div class="btn-row"><button class="btn ' + (window.RESULTS_URL ? "ghost" : "amber") + '" id="btnDl">⬇ ' + (window.RESULTS_URL ? "Download a backup copy" : "Download results file for your teacher") + '</button><button class="btn ghost" id="btnPrint">🖨 Print or save as PDF</button></div>' +
+      (window.RESULTS_URL ? '' : '<div class="info no-print"><b>Hand in:</b> download your results file and upload it to the Teams assignment. Keep the PDF for your revision.</div>') +
       '<p class="no-print" style="font-size:.68rem;color:var(--muted);margin-top:18px">Teacher: to reset this device for another learner, <a href="#" id="lnkReset">reset the quiz</a>.</p></section>';
     app.innerHTML = html;
     setTimeout(function () { var arc = document.getElementById("arc"); if (arc) arc.style.strokeDashoffset = C * (1 - R.pct / 100); }, 80);
-    $("#pledge").oninput = function (e) { S.pledge = e.target.value; save(); };
+    $("#pledge").oninput = function (e) { S.pledge = e.target.value; save(); sendPledge(); };
+    sentBadge(); if (S.sent !== "yes") sendResults(R);
     $("#btnPrint").onclick = function () { Array.prototype.forEach.call(app.querySelectorAll("details"), function (d) { d.open = true; }); window.print(); };
     $("#btnDl").onclick = function () { download(R); };
     $("#lnkReset").onclick = function (e) {
@@ -319,11 +320,40 @@
     };
   }
 
-  function download(R) {
-    var rec = { app: "tmc-core-progress", version: 1, name: S.name, group: S.group, started: S.started, finished: S.finished, minutes: mins(), leftPage: S.leaves,
+  function record(R) {
+    S.id = S.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+    return { app: "tmc-core-progress", version: 1, id: S.id, name: S.name, group: S.group, started: S.started, finished: S.finished, minutes: mins(), leftPage: S.leaves,
       pledge: S.pledge, answers: S.answers, total: R.total, max: R.max, pct: R.pct, band: R.band.name,
       units: Object.keys(R.units).reduce(function (o, k) { o[k] = pc(R.units[k]); return o; }, {}),
       marks: Object.keys(R.per).reduce(function (o, k) { o[k] = R.per[k].score; return o; }, {}) };
+  }
+
+  /* automatic sending to the teacher's results sheet */
+  function post(obj) {
+    return fetch(window.RESULTS_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(obj) });
+  }
+  function sendResults(R, tries) {
+    if (!window.RESULTS_URL) { S.sent = "off"; save(); return; }
+    tries = tries || 0;
+    post(record(R)).then(function () { S.sent = "yes"; save(); sentBadge(); })
+      .catch(function () { S.sent = "retry"; save(); sentBadge(); if (tries < 20) setTimeout(function () { sendResults(R, tries + 1); }, Math.min(60000, 3000 * (tries + 1))); });
+  }
+  function sentBadge() {
+    var el = document.getElementById("sent"); if (!el) return;
+    if (S.sent === "yes") { el.className = "info"; el.innerHTML = "<b>✓ Your results have been sent to your teacher.</b> You do not need to do anything else."; }
+    else if (S.sent === "retry") { el.className = "warn"; el.innerHTML = "<b>Sending your results…</b> Keep this page open until this says sent. It retries automatically."; }
+    else if (S.sent === "off") { el.className = "info"; el.innerHTML = "Download your results file below and hand it in to your teacher."; }
+    else { el.className = "info"; el.innerHTML = "Sending your results to your teacher…"; }
+  }
+  var pledgeTimer = null;
+  function sendPledge() {
+    if (!window.RESULTS_URL || !S.id) return;
+    clearTimeout(pledgeTimer);
+    pledgeTimer = setTimeout(function () { post({ kind: "pledge", id: S.id, pledge: S.pledge }).catch(function () { }); }, 1500);
+  }
+
+  function download(R) {
+    var rec = record(R);
     var blob = new Blob([JSON.stringify(rec, null, 1)], { type: "application/json" }), a = document.createElement("a");
     a.href = URL.createObjectURL(blob); a.download = (S.name + " " + S.group + " core progress results.json").replace(/[^\w .-]/g, "");
     document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);

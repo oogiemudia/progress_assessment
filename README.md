@@ -22,6 +22,14 @@ An online progress assessment for T Level Engineering and Manufacturing core lea
 - **Download results file** (to hand in on Teams) and **Print or save as PDF**.
 - Reading support: larger text and cream background buttons, with a Verdana font throughout.
 
+## Automatic results collection
+
+1. Paste `setup/apps_script.gs` into a Google Sheet's Apps Script.
+2. Deploy it as a web app.
+3. Put its `/exec` URL in `js/config.js`.
+
+Every learner's results then arrive in the sheet the moment they submit, and the teacher dashboard loads them with one click. Learners do nothing extra.
+
 ## Teacher dashboard
 
 Open `teacher.html`. The teacher code is `TMC2026`, and the same code resets a learner device from the results page.
