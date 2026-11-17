@@ -22,7 +22,7 @@
 
   /* accessibility toggles */
   function applyA11y() {
-    document.body.classList.toggle("big", !!S.a11y.big); document.body.classList.toggle("cream", !!S.a11y.cream);
+    document.body.classList.toggle("big", !!S.a11y.big); document.documentElement.classList.toggle("big", !!S.a11y.big); document.body.classList.toggle("cream", !!S.a11y.cream);
     document.getElementById("btnText").setAttribute("aria-pressed", !!S.a11y.big);
     document.getElementById("btnCream").setAttribute("aria-pressed", !!S.a11y.cream);
   }

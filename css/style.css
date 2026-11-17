@@ -4,7 +4,7 @@
   --fs: 18px; --radius: 14px;
 }
 body.cream { --bg: #f7f1e1; --card: #fffaf0; --soft: #fbf5e6; }
-body.big { --fs: 21px; }
+html.big, body.big { --fs: 22px; }
 * { box-sizing: border-box; }
 html { font-size: var(--fs); }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: Verdana, "DejaVu Sans", Arial, sans-serif; line-height: 1.55; }
